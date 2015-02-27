@@ -1,2 +1,2 @@
 # epiradio
-E:\piadio
+E:\pi\radio
