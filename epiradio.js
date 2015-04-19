@@ -1,7 +1,8 @@
-var request = require("request");
-var player = require("player");
-var later = require("later");
-var fs = require("fs");
+const request = require("request"),
+      process = require("child_process");
+      player = require("player"),
+      later = require("later"),
+      fs = require("fs");
 
 var utils = require("./utils.js");
 
@@ -32,12 +33,17 @@ function next() {
     playlist[0] = playlist[1];
     console.log("Now playing: " + playlist[0].title + " by " + playlist[0].artist + " from " + playlist[0].group);
     new player(playlist[0].url).play(next);
+
     playlist[1] = utils.random_select(files);
     playlist[1].file = "./cache/" + playlist[1].url.split("/").pop(); // pop() is slower than [length-1], but clearer in this case
-    setTimeout(function() {
-        console.log("Downloading: " + playlist[1].title + " by " + playlist[1].artist);
-        request.get(playlist[1].url).pipe(fs.createWriteStream(playlist[1].file));
-    }, 3000);
+
+    console.log("Downloading: " + playlist[1].title + " by " + playlist[1].artist);
+    process.exec(
+        "wget " + playlist[1].url + " -O " + playlist[1].file,
+        function (err, stdout, stderr) {
+            console.log("Downloaded: " + playlist[1].title + " by " + playlist[1].artist);
+        }
+    );
 }
 
 function play() {
@@ -46,14 +52,19 @@ function play() {
             playlist[i] = utils.random_select(files);
             console.log("Downloading: " + playlist[i].title + " by " + playlist[i].artist);
             playlist[i].file = "./cache/" + playlist[i].url.split("/").pop();
-            var req = request.get(playlist[i].url);
             if (i == 0) {
-                req.on('end', function () {
-                    console.log("Now playing: " + playlist[0].title + " by " + playlist[0].artist + " from " + playlist[0].group);
-                    new player(playlist[0].file).play(next);
-                });
+                process.exec(
+                    "wget " + playlist[i].url + " -P cache",
+                    function (err, stdout, stderr) {
+                        console.log("Now playing: " + playlist[0].title + " by " + playlist[0].artist + " from " + playlist[0].group);
+                        new player(playlist[0].file).play(next);
+                    }
+                );
+            } else {
+                process.exec(
+                    "wget " + playlist[i].url + " -P cache"
+                );
             }
-            req.pipe(fs.createWriteStream(playlist[i].file));
         }
     }
 }
@@ -115,6 +126,8 @@ function update_groups() {
         update_group(config.groups[i]);
     }
 }
+
+
 
 var sched = later.parse.recur().every(config.update_period).minute();
 var timer = later.setInterval(update_groups, sched);
