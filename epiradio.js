@@ -2,7 +2,8 @@ const request = require("request"),
       process = require("child_process");
       player = require("player"),
       later = require("later"),
-      fs = require("fs");
+      fs = require("fs"),
+      util = require("util");
 
 var utils = require("./utils.js");
 
@@ -31,17 +32,33 @@ function next() {
     fs.unlink(playlist[0].file);
     playlist[0].file = null;
     playlist[0] = playlist[1];
-    console.log("Now playing: " + playlist[0].title + " by " + playlist[0].artist + " from " + playlist[0].group);
+    console.log(
+        util.format(
+            "Now playing: %s by %s from %s",
+            playlist[0].title,
+            playlist[0].artist,
+            playlist[0].group
+        )
+    );
     new player(playlist[0].url).play(next);
 
     playlist[1] = utils.random_select(files);
-    playlist[1].file = "./cache/" + playlist[1].url.split("/").pop(); // pop() is slower than [length-1], but clearer in this case
+    playlist[1].file = util.format(
+        "./cache/%s",
+        playlist[1].url.split("/").pop() // pop() is slower than [length-1], but clearer in this case
+    );
 
-    console.log("Downloading: " + playlist[1].title + " by " + playlist[1].artist);
+    console.log(
+        util.format(
+            "Downloading: %s by %s",
+            playlist[1].title,
+            playlist[1].artist
+        )
+    );
     process.exec(
-        "wget " + playlist[1].url + " -O " + playlist[1].file,
+        util.format("wget %s -P cache", playlist[1].url),
         function (err, stdout, stderr) {
-            console.log("Downloaded: " + playlist[1].title + " by " + playlist[1].artist);
+            console.log(util.format("Downloaded: %s by %s", playlist[1].title, playlist[1].artist));
         }
     );
 }
@@ -50,19 +67,35 @@ function play() {
     if (!playlist.length) {
         for (var i=0; i<2; i++) {
             playlist[i] = utils.random_select(files);
-            console.log("Downloading: " + playlist[i].title + " by " + playlist[i].artist);
-            playlist[i].file = "./cache/" + playlist[i].url.split("/").pop();
+            console.log(
+                util.format(
+                    "Downloading: %s by %s",
+                    playlist[i].title,
+                    playlist[i].artist
+                )
+            );
+            playlist[i].file = util.format(
+                "./cache/%s",
+                playlist[i].url.split("/").pop()
+            );
             if (i == 0) {
                 process.exec(
-                    "wget " + playlist[i].url + " -P cache",
+                    util.format("wget %s -P cache", playlist[i].url),
                     function (err, stdout, stderr) {
-                        console.log("Now playing: " + playlist[0].title + " by " + playlist[0].artist + " from " + playlist[0].group);
+                        console.log(
+                            util.format(
+                                "Now playing: %s by %s from %s",
+                                playlist[0].title,
+                                playlist[0].artist,
+                                playlist[0].group
+                            )
+                        );
                         new player(playlist[0].file).play(next);
                     }
                 );
             } else {
                 process.exec(
-                    "wget " + playlist[i].url + " -P cache"
+                    util.format("wget %s -P cache", playlist[i].url)
                 );
             }
         }
@@ -104,7 +137,7 @@ function update_group(group_name) {
                 add_post(res[i], group_name);
             }
         }
-        console.log("Updated " + group_name + ".");
+        console.log(util.format("Updated %s.", group_name));
         groups_updated[group_name] = true;
         for (group in groups_updated) {
             if (!groups_updated[group]) {
@@ -126,8 +159,6 @@ function update_groups() {
         update_group(config.groups[i]);
     }
 }
-
-
 
 var sched = later.parse.recur().every(config.update_period).minute();
 var timer = later.setInterval(update_groups, sched);
