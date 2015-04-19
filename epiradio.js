@@ -32,16 +32,14 @@ function next() {
 }
 
 function play() {
-    if (!playing)
-    {
+    if (!playing) {
         playing = true;
         next();
     }
 }
 
 function add_audio(audio) {
-    files.push(
-        {
+    files.push({
             artist: audio.artist,
             title: audio.title,
             url: audio.url.split("?")[0],
@@ -51,16 +49,14 @@ function add_audio(audio) {
 
 function add_post(post) {
     for (var i=0; i<post.attachments.length; i++) {
-        if (post.attachments[i].type == "audio")
-        {
+        if (post.attachments[i].type == "audio") {
             add_audio(post.attachments[i].audio);
         }
     }
 }
 
 function update_group(group_name) {
-    request(
-    {
+    request({
         uri: "https://api.vk.com/method/wall.get",
         method: "POST",
         form: {
