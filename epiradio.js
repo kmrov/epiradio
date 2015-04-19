@@ -1,6 +1,7 @@
 var request = require("request");
 var player = require("player");
 var later = require("later");
+var fs = require("fs");
 
 var utils = require("./utils.js");
 
@@ -21,36 +22,56 @@ var config = {
 
 var groups_updated = {};
 
-var playing = false;
+var playlist = [];
 
 var files = [];
 
 function next() {
-    var audio = utils.random_select(files);
-    console.log("Now playing: " + audio.title + " by " + audio.artist);
-    new player(audio.url).play(next);
+    fs.unlink(playlist[0].file);
+    playlist[0].file = null;
+    playlist[0] = playlist[1];
+    console.log("Now playing: " + playlist[0].title + " by " + playlist[0].artist + " from " + playlist[0].group);
+    new player(playlist[0].url).play(next);
+    playlist[1] = utils.random_select(files);
+    playlist[1].file = "./cache/" + playlist[1].url.split("/").pop(); // pop() is slower than [length-1], but clearer in this case
+    setTimeout(function() {
+        console.log("Downloading: " + playlist[1].title + " by " + playlist[1].artist);
+        request.get(playlist[1].url).pipe(fs.createWriteStream(playlist[1].file));
+    }, 3000);
 }
 
 function play() {
-    if (!playing) {
-        playing = true;
-        next();
+    if (!playlist.length) {
+        for (var i=0; i<2; i++) {
+            playlist[i] = utils.random_select(files);
+            console.log("Downloading: " + playlist[i].title + " by " + playlist[i].artist);
+            playlist[i].file = "./cache/" + playlist[i].url.split("/").pop();
+            var req = request.get(playlist[i].url);
+            if (i == 0) {
+                req.on('end', function () {
+                    console.log("Now playing: " + playlist[0].title + " by " + playlist[0].artist + " from " + playlist[0].group);
+                    new player(playlist[0].file).play(next);
+                });
+            }
+            req.pipe(fs.createWriteStream(playlist[i].file));
+        }
     }
 }
 
-function add_audio(audio) {
+function add_audio(audio, group) {
     files.push({
             artist: audio.artist,
             title: audio.title,
             url: audio.url.split("?")[0],
+            group: group
         }
     );
 }
 
-function add_post(post) {
+function add_post(post, group) {
     for (var i=0; i<post.attachments.length; i++) {
         if (post.attachments[i].type == "audio") {
-            add_audio(post.attachments[i].audio);
+            add_audio(post.attachments[i].audio, group);
         }
     }
 }
@@ -69,7 +90,7 @@ function update_group(group_name) {
         res = JSON.parse(body).response.slice(1); // first item is posts count
         for (var i=0; i<res.length; i++) {
             if (res[i].attachments && !res[i].is_pinned) {
-                add_post(res[i]);
+                add_post(res[i], group_name);
             }
         }
         console.log("Updated " + group_name + ".");
@@ -80,7 +101,7 @@ function update_group(group_name) {
             }
         }
         console.log("Update finished.");
-        if (!playing) {
+        if (!playlist.length) {
             play();
         }
     }
