@@ -28,3 +28,6 @@ node_modules
 
 # NPM log
 npm-debug.log
+
+# Audio files cache
+cache
