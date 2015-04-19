@@ -1,6 +1,8 @@
 var request = require("request");
 var player = require("player");
 
+var utils = require("./utils.js");
+
 var groups = [
     "progressivemetal",
     "e_avantgarde"
@@ -10,12 +12,8 @@ var playing = false;
 
 var files = [];
 
-function random_select(arr) {
-    return arr[Math.floor(Math.random()*arr.length)];
-}
-
 function next() {
-    var audio = random_select(files);
+    var audio = utils.random_select(files);
     console.log("Now playing: " + audio.title + " by " + audio.artist);
     new player(audio.url).play(next);
 }
