@@ -3,10 +3,15 @@ var player = require("player");
 
 var utils = require("./utils.js");
 
-var groups = [
-    "progressivemetal",
-    "e_avantgarde"
-];
+var config = {
+    groups: [
+        "progressivemetal",
+        "e_avantgarde"
+    ],
+    update_period: 60 // minutes
+}
+
+var groups_updated = {};
 
 var playing = false;
 
@@ -63,6 +68,12 @@ function update_group(group_name) {
                 add_post(res[i]);
             }
         }
+        groups_updated[group_name] = true;
+        for (group in groups_updated) {
+            if (!groups_updated[group]) {
+                return;
+            }
+        }
         if (!playing) {
             play();
         }
@@ -71,8 +82,9 @@ function update_group(group_name) {
 }
 
 function update_groups() {
-    for (var i=0; i<groups.length; i++) {
-        update_group(groups[i]);
+    for (var i=0; i<config.groups.length; i++) {
+        groups_updated[config.groups[i]] = false;
+        update_group(config.groups[i]);
     }
 }
 
