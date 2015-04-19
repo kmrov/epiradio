@@ -1,12 +1,20 @@
 var request = require("request");
 var player = require("player");
+var later = require("later");
 
 var utils = require("./utils.js");
 
 var config = {
     groups: [
+        "e_music",
         "progressivemetal",
-        "e_avantgarde"
+        "e_avantgarde",
+        "e_music_progrock",
+        "e_russian_chanson",
+        "e_music_krautrock",
+        "e_music_neoprog",
+        "experimental_rock",
+        "e_music_psychedelic",
     ],
     update_period: 60 // minutes
 }
@@ -64,16 +72,18 @@ function update_group(group_name) {
     function(error, response, body) {
         res = JSON.parse(body).response.slice(1); // first item is posts count
         for (var i=0; i<res.length; i++) {
-            if (!res[i].is_pinned) {
+            if (res[i].attachments && !res[i].is_pinned) {
                 add_post(res[i]);
             }
         }
+        console.log("Updated " + group_name + ".");
         groups_updated[group_name] = true;
         for (group in groups_updated) {
             if (!groups_updated[group]) {
                 return;
             }
         }
+        console.log("Update finished.");
         if (!playing) {
             play();
         }
@@ -82,10 +92,14 @@ function update_group(group_name) {
 }
 
 function update_groups() {
+    console.log("Updating...");
     for (var i=0; i<config.groups.length; i++) {
         groups_updated[config.groups[i]] = false;
         update_group(config.groups[i]);
     }
 }
+
+var sched = later.parse.recur().every(config.update_period).minute();
+var timer = later.setInterval(update_groups, sched);
 
 update_groups();
