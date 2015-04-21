@@ -3,7 +3,9 @@ const request = require("request"),
       player = require("player"),
       later = require("later"),
       fs = require("fs"),
-      util = require("util");
+      util = require("util"),
+      http = require("http"),
+      socketio = require("socket.io");
 
 var utils = require("./utils.js");
 
@@ -32,13 +34,16 @@ function next() {
     fs.unlink(playlist[0].file);
     playlist[0].file = null;
     playlist[0] = playlist[1];
-    console.log(
-        util.format(
-            "Now playing: %s by %s from %s",
-            playlist[0].title,
-            playlist[0].artist,
-            playlist[0].group
-        )
+    io.sockets.emit(
+        "playing",
+        {
+            message: util.format(
+                "Now playing: %s by %s from %s",
+                playlist[0].title,
+                playlist[0].artist,
+                playlist[0].group
+            )
+        }
     );
     new player(playlist[0].url).play(next);
 
@@ -82,13 +87,16 @@ function play() {
                 process.exec(
                     util.format("wget %s -P cache", playlist[i].url),
                     function (err, stdout, stderr) {
-                        console.log(
-                            util.format(
-                                "Now playing: %s by %s from %s",
-                                playlist[0].title,
-                                playlist[0].artist,
-                                playlist[0].group
-                            )
+                        io.sockets.emit(
+                            "playing",
+                            {
+                                message: util.format(
+                                    "Now playing: %s by %s from %s",
+                                    playlist[0].title,
+                                    playlist[0].artist,
+                                    playlist[0].group
+                                )
+                            }
                         );
                         new player(playlist[0].file).play(next);
                     }
@@ -164,3 +172,28 @@ var sched = later.parse.recur().every(config.update_period).minute();
 var timer = later.setInterval(update_groups, sched);
 
 update_groups();
+
+var app = http.createServer(function(req, res) {
+    res.writeHead(200, {'Content-Type': 'text/html'});
+    res.end(fs.readFileSync('index.html'));
+});
+
+var io = require('socket.io').listen(app);
+
+io.sockets.on('connection', function(socket) {
+    if (playlist.length > 0) {
+        socket.emit(
+            "playing",
+            {
+                message: util.format(
+                    "Now playing: %s by %s from %s",
+                    playlist[0].title,
+                    playlist[0].artist,
+                    playlist[0].group
+                )
+            }
+        );
+    }
+});
+
+app.listen(3000);
