@@ -30,14 +30,20 @@ var playlist = [];
 
 var files = [];
 
+var current_player = null;
+
 function next() {
+    if (current_player) {
+        current_player.stop();
+    }
+
     fs.unlink(playlist[0].file);
     playlist[0].file = null;
     playlist[0] = playlist[1];
     io.sockets.emit(
         "playing",
         {
-            message: util.format(
+            nowplaying: util.format(
                 "Now playing: %s by %s from %s",
                 playlist[0].title,
                 playlist[0].artist,
@@ -45,7 +51,9 @@ function next() {
             )
         }
     );
-    new player(playlist[0].url).play(next);
+
+    current_player = new player(playlist[0].file);
+    current_player.play(next);
 
     playlist[1] = utils.random_select(files);
     playlist[1].file = util.format(
@@ -90,7 +98,7 @@ function play() {
                         io.sockets.emit(
                             "playing",
                             {
-                                message: util.format(
+                                nowplaying: util.format(
                                     "Now playing: %s by %s from %s",
                                     playlist[0].title,
                                     playlist[0].artist,
@@ -98,7 +106,8 @@ function play() {
                                 )
                             }
                         );
-                        new player(playlist[0].file).play(next);
+                        current_player = new player(playlist[0].file);
+                        current_player.play(next);
                     }
                 );
             } else {
@@ -139,13 +148,18 @@ function update_group(group_name) {
         }
     },
     function(error, response, body) {
-        res = JSON.parse(body).response.slice(1); // first item is posts count
-        for (var i=0; i<res.length; i++) {
-            if (res[i].attachments && !res[i].is_pinned) {
-                add_post(res[i], group_name);
+        var parsed = JSON.parse(body);
+        if (parsed.error) {
+            console.log(util.format("Error while updating %s.", group_name));
+        } else {
+            res = parsed.response.slice(1); // first item is posts count
+            for (var i=0; i<res.length; i++) {
+                if (res[i].attachments && !res[i].is_pinned) {
+                    add_post(res[i], group_name);
+                }
             }
+            console.log(util.format("Updated %s.", group_name));
         }
-        console.log(util.format("Updated %s.", group_name));
         groups_updated[group_name] = true;
         for (group in groups_updated) {
             if (!groups_updated[group]) {
@@ -161,6 +175,7 @@ function update_group(group_name) {
 }
 
 function update_groups() {
+    files = [];
     console.log("Updating...");
     for (var i=0; i<config.groups.length; i++) {
         groups_updated[config.groups[i]] = false;
@@ -181,11 +196,27 @@ var app = http.createServer(function(req, res) {
 var io = require('socket.io').listen(app);
 
 io.sockets.on('connection', function(socket) {
+    socket.on('sources', function(data) {
+        console.log(data);
+        config.groups = data.sources;
+        update_groups();
+    });
+
+    socket.on('next', function(data) {
+        next();
+    });
+
+    socket.emit(
+        "sources",
+        {
+            sources: config.groups
+        }
+    );
     if (playlist.length > 0) {
         socket.emit(
             "playing",
             {
-                message: util.format(
+                nowplaying: util.format(
                     "Now playing: %s by %s from %s",
                     playlist[0].title,
                     playlist[0].artist,

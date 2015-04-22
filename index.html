@@ -7,13 +7,31 @@
             var socket = io.connect('//localhost:3000');
 
             socket.on('playing', function(data) {
-                $('#messages').append('<li>' + data.message + '</li>');
-
-                // socket.emit('i am client', {data: 'foo!'});
+                $('#nowplaying').html(data.nowplaying);
             });
+
+            socket.on('sources', function(data) {
+                $('#sources').val(data.sources.join('\n'));
+            });
+
+            function sources() {
+                var groups = $('#sources').val().split('\n');
+                socket.emit('sources', {sources: groups});
+            }
+
+            function next() {
+                socket.emit('next');
+            }
         </script>
     </head>
     <body>
-        <ul id='messages'></ul>
+        <div id='nowplaying'></div>
+
+        <textarea id='sources' rows=12 cols=64>
+
+        </textarea>
+        <input type='button' onclick='sources();' value='submit'>
+
+        <a href='#' onclick='next(); return false;' value='next'>next</a>
     </body>
 </html>
