@@ -148,20 +148,21 @@ function update_group(group_name) {
         }
     },
     function(error, response, body) {
+        var need_clean = true;
+        for (group in groups_updated) {
+            if (groups_updated[group]) {
+                need_clean = false;
+                break;
+            }
+        }
+        if (need_clean) {
+            files = [];
+        }
+
         var parsed = JSON.parse(body);
         if (parsed.error) {
             console.log(util.format("Error while updating %s.", group_name));
         } else {
-            var need_clean = true;
-            for (group in groups_updated) {
-                if (groups_updated[group]) {
-                    need_clean = false;
-                    break;
-                }
-            }
-            if (need_clean) {
-                files = [];
-            }
             res = parsed.response.slice(1); // first item is posts count
             for (var i=0; i<res.length; i++) {
                 if (res[i].attachments && !res[i].is_pinned) {
