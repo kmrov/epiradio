@@ -152,6 +152,16 @@ function update_group(group_name) {
         if (parsed.error) {
             console.log(util.format("Error while updating %s.", group_name));
         } else {
+            var need_clean = true;
+            for (group in groups_updated) {
+                if (groups_updated[group]) {
+                    need_clean = false;
+                    break;
+                }
+            }
+            if (need_clean) {
+                files = [];
+            }
             res = parsed.response.slice(1); // first item is posts count
             for (var i=0; i<res.length; i++) {
                 if (res[i].attachments && !res[i].is_pinned) {
@@ -175,7 +185,6 @@ function update_group(group_name) {
 }
 
 function update_groups() {
-    files = [];
     console.log("Updating...");
     for (var i=0; i<config.groups.length; i++) {
         groups_updated[config.groups[i]] = false;
