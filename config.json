@@ -1,0 +1,15 @@
+{
+    "groups": [
+        "e_music",
+        "progressivemetal",
+        "e_avantgarde",
+        "e_music_progrock",
+        "e_russian_chanson",
+        "e_music_krautrock",
+        "e_music_neoprog",
+        "experimental_rock",
+        "e_music_psychedelic",
+        "e_gamez"
+    ],
+    "update_period": 60
+}

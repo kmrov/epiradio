@@ -9,20 +9,7 @@ const request = require("request"),
 
 var utils = require("./utils.js");
 
-var config = {
-    groups: [
-        "e_music",
-        "progressivemetal",
-        "e_avantgarde",
-        "e_music_progrock",
-        "e_russian_chanson",
-        "e_music_krautrock",
-        "e_music_neoprog",
-        "experimental_rock",
-        "e_music_psychedelic",
-    ],
-    update_period: 60 // minutes
-}
+var config = JSON.parse(fs.readFileSync("config.json", 'utf8'))
 
 var groups_updated = {};
 
@@ -209,6 +196,11 @@ io.sockets.on('connection', function(socket) {
     socket.on('sources', function(data) {
         console.log(data);
         config.groups = data.sources;
+        fs.writeFile("config.json", JSON.stringify(config, null, 4), function(err) {
+            if (err) {
+                console.log(err);
+            }
+        });
         update_groups();
     });
 
