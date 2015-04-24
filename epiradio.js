@@ -9,7 +9,7 @@ const request = require("request"),
 
 var utils = require("./utils.js");
 
-var config = JSON.parse(fs.readFileSync("config.json", 'utf8'))
+var config = JSON.parse(fs.readFileSync("config.json", "utf8"))
 
 var groups_updated = {};
 
@@ -186,14 +186,14 @@ var timer = later.setInterval(update_groups, sched);
 update_groups();
 
 var app = http.createServer(function(req, res) {
-    res.writeHead(200, {'Content-Type': 'text/html'});
-    res.end(fs.readFileSync('index.html'));
+    res.writeHead(200, {"Content-Type": "text/html"});
+    res.end(fs.readFileSync("index.html"));
 });
 
-var io = require('socket.io').listen(app);
+var io = require("socket.io").listen(app);
 
-io.sockets.on('connection', function(socket) {
-    socket.on('sources', function(data) {
+io.sockets.on("connection", function(socket) {
+    socket.on("sources", function(data) {
         console.log(data);
         config.groups = data.sources;
         fs.writeFile("config.json", JSON.stringify(config, null, 4), function(err) {
@@ -204,14 +204,33 @@ io.sockets.on('connection', function(socket) {
         update_groups();
     });
 
-    socket.on('next', function(data) {
+    socket.on("next", function(data) {
         next();
+    });
+
+    socket.on("update_period", function(data) {
+        config.update_period = parseInt(data.update_period);
+        timer.clear();
+        sched = later.parse.recur().every(config.update_period).minute();
+        timer = later.setInterval(update_groups, sched);
+
+        fs.writeFile("config.json", JSON.stringify(config, null, 4), function(err) {
+            if (err) {
+                console.log(err);
+            }
+        });
     });
 
     socket.emit(
         "sources",
         {
             sources: config.groups
+        }
+    );
+    socket.emit(
+        "update_period",
+        {
+            update_period: config.update_period
         }
     );
     if (playlist.length > 0) {

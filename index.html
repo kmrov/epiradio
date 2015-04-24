@@ -1,37 +1,51 @@
 <!doctype html>
 <html>
     <head>
-        <script src='//code.jquery.com/jquery-1.7.2.min.js'></script>
-        <script src='//localhost:3000/socket.io/socket.io.js'></script>
+        <script src="//code.jquery.com/jquery-1.7.2.min.js"></script>
+        <script src="//localhost:3000/socket.io/socket.io.js"></script>
         <script>
-            var socket = io.connect('//localhost:3000');
+            var socket = io.connect("//localhost:3000");
 
-            socket.on('playing', function(data) {
-                $('#nowplaying').html(data.nowplaying);
+            socket.on("playing", function(data) {
+                $("#nowplaying").html(data.nowplaying);
             });
 
-            socket.on('sources', function(data) {
-                $('#sources').val(data.sources.join('\n'));
+            socket.on("sources", function(data) {
+                $("#sources").val(data.sources.join("\n"));
+            });
+
+            socket.on("update_period", function(data) {
+                $("#update_period").val(data.update_period);
             });
 
             function sources() {
-                var groups = $('#sources').val().split('\n');
-                socket.emit('sources', {sources: groups});
+                var groups = $("#sources").val().split("\n");
+                socket.emit("sources", {sources: groups});
+            }
+
+            function update_period() {
+                socket.emit("update_period",
+                    {
+                        update_period: $("#update_period").val()
+                    }
+                );
             }
 
             function next() {
-                socket.emit('next');
+                socket.emit("next");
             }
         </script>
     </head>
     <body>
-        <div id='nowplaying'></div>
+        <span id="nowplaying"></span> <a href="#" onclick="next(); return false;" value="next">next</a> <br>
 
-        <textarea id='sources' rows=12 cols=64>
+        Groups list:<br>
+        <textarea id="sources" rows=12 cols=64>
 
         </textarea>
-        <input type='button' onclick='sources();' value='submit'>
+        <input type="button" onclick="sources();" value="update">
 
-        <a href='#' onclick='next(); return false;' value='next'>next</a>
+        <br>
+        Update period: <input type="text" id="update_period"><input type="button" onclick="update_period();" value="update">
     </body>
 </html>
