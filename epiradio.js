@@ -5,7 +5,8 @@ const request = require("request"),
       fs = require("fs"),
       util = require("util"),
       http = require("http"),
-      socketio = require("socket.io");
+      socketio = require("socket.io"),
+      fstatic = require("node-static");
 
 var utils = require("./utils.js");
 
@@ -185,9 +186,15 @@ var timer = later.setInterval(update_groups, sched);
 
 update_groups();
 
+var file = new fstatic.Server("./static", {
+    cache: 3600,
+    gzip: true
+});
+
 var app = http.createServer(function(req, res) {
-    res.writeHead(200, {"Content-Type": "text/html"});
-    res.end(fs.readFileSync("index.html"));
+    req.addListener("end", function () {
+        file.serve(req, res);
+    }).resume();
 });
 
 var io = require("socket.io").listen(app);
