@@ -3,6 +3,7 @@
     <head>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
         <script src="//localhost:3000/socket.io/socket.io.js"></script>
+
         <script>
             var socket = io.connect("//localhost:3000");
 
@@ -35,17 +36,58 @@
                 socket.emit("next");
             }
         </script>
+
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap-theme.min.css">
     </head>
     <body>
-        <span id="nowplaying"></span> <a href="#" onclick="next(); return false;" value="next">next</a> <br>
+        <nav class="navbar navbar-inverse navbar-static-top" role="tablist">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <a class="navbar-brand" href="#">E:\pi\radio</a>
+                </div>
+                <ul class="nav navbar-nav">
+                    <li class="active"><a href="#now" aria-controls="now" role="tab" data-toggle="tab">Now playing</a></li>
+                    <li><a href="#alarm" aria-controls="alarm" role="tab" data-toggle="tab">Alarm</a></li>
+                    <li><a href="#settings" aria-controls="settings" role="tab" data-toggle="tab">Settings</a></li>
+                </ul>
+            </div>
+        </nav>
+        <div class="tab-content">
+            <div role="tabpanel" class="tab-pane active" id="now">
+                <div id="nowplaying"></div> 
+                <div class="glyphicon glyphicon-step-forward" href="#" onclick="next(); return false;" value="next"></div>
+            </div>
 
-        Groups list:<br>
-        <textarea id="sources" rows=12 cols=64>
+            <div role="tabpanel" class="tab-pane" id="alarm">
+                Under construction
+            </div>
 
-        </textarea>
-        <input type="button" onclick="sources();" value="update">
+            <div role="tabpanel" class="tab-pane" id="settings">
+                <div class="container-fluid">
+                    <div class="row">
+                    <div class="col-lg-5">
+                        <div>Groups list: <button class="btn btn-sm btn-default" type="button" onclick="sources();">Save</button></div>
+                        <textarea id="sources" rows=12 cols=64></textarea>
+                    </div>
+                    </div>
 
-        <br>
-        Update period: <input type="text" id="update_period"><input type="button" onclick="update_period();" value="update">
+                    <div class="row">
+                    <div class="col-lg-5">
+                        Update period: 
+
+                        <div class="input-group">
+                            <input type="text" class="form-control" placeholder="Update period" id="update_period">
+                            <span class="input-group-btn">
+                            <button class="btn btn-default" type="button" onclick="update_period();">Save</button>
+                            </span>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
     </body>
 </html>
