@@ -19,6 +19,10 @@
                 $("#update_period").val(data.update_period);
             });
 
+            socket.on("max_age", function(data) {
+                $("#max_age").val(data.max_age);
+            });
+
             function sources() {
                 var groups = $("#sources").val().split("\n");
                 socket.emit("sources", {sources: groups});
@@ -28,6 +32,14 @@
                 socket.emit("update_period",
                     {
                         update_period: $("#update_period").val()
+                    }
+                );
+            }
+
+            function max_age() {
+                socket.emit("max_age",
+                    {
+                        max_age: $("#max_age").val()
                     }
                 );
             }
@@ -74,7 +86,7 @@
 
                     <div class="row">
                     <div class="col-lg-5">
-                        Update period: 
+                        Update period:
 
                         <div class="input-group">
                             <input type="text" class="form-control" placeholder="Update period" id="update_period">
@@ -84,6 +96,20 @@
                         </div>
                     </div>
                     </div>
+
+                    <div class="row">
+                    <div class="col-lg-5">
+                        Max age:
+
+                        <div class="input-group">
+                            <input type="text" class="form-control" placeholder="Max age" id="max_age">
+                            <span class="input-group-btn">
+                            <button class="btn btn-default" type="button" onclick="max_age();">Save</button>
+                            </span>
+                        </div>
+                    </div>
+                    </div>
+
                 </div>
             </div>
         </div>

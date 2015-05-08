@@ -131,11 +131,14 @@ function update_group(group_name) {
         method: "POST",
         form: {
             domain: group_name,
-            count: 10,
+            count: 99,
             filter: "owner"
         }
     },
     function(error, response, body) {
+        var earliest = new Date();
+        earliest.setDate(earliest.getDate() - config.max_age);
+        var min_date = earliest.getTime();
         var need_clean = true;
         for (group in groups_updated) {
             if (groups_updated[group]) {
@@ -153,7 +156,7 @@ function update_group(group_name) {
         } else {
             res = parsed.response.slice(1); // first item is posts count
             for (var i=0; i<res.length; i++) {
-                if (res[i].attachments && !res[i].is_pinned) {
+                if (res[i].attachments && !res[i].is_pinned && 1000*res[i].date>=min_date) {
                     add_post(res[i], group_name);
                 }
             }
@@ -228,6 +231,17 @@ io.sockets.on("connection", function(socket) {
         });
     });
 
+    socket.on("max_age", function(data) {
+        config.max_age = parseInt(data.max_age);
+
+        fs.writeFile("config.json", JSON.stringify(config, null, 4), function(err) {
+            if (err) {
+                console.log(err);
+            }
+        });
+        update_groups();
+    });
+
     socket.emit(
         "sources",
         {
@@ -238,6 +252,12 @@ io.sockets.on("connection", function(socket) {
         "update_period",
         {
             update_period: config.update_period
+        }
+    );
+    socket.emit(
+        "max_age",
+        {
+            max_age: config.max_age
         }
     );
     if (playlist.length > 0) {

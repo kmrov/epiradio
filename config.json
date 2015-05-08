@@ -11,5 +11,6 @@
         "e_music_psychedelic",
         "e_gamez"
     ],
-    "update_period": 60
+    "update_period": 60,
+    "max_age": 7
 }
